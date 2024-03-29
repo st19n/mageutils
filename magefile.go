@@ -6,7 +6,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/magefile/mage/mg"
@@ -60,16 +59,7 @@ func Test() error {
 
 // Tools - Install required tools
 func Tools() error {
-	toolBinDir, err := filepath.Abs("./.tmp/bin")
-	if err != nil {
-		return err
-	}
-	err = os.MkdirAll(toolBinDir, 0o750)
-	if err != nil {
-		return err
-	}
-
-	return install.Tools(toolBinDir, tools)
+	return install.Tools("./.tmp/bin", tools)
 }
 
 // Lint - Run golangci-lint

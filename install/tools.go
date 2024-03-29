@@ -1,49 +1,69 @@
 package install
 
 import (
+	"path/filepath"
+	"os"
 	"runtime"
 
 	download "github.com/st19n/mageutils/download"
 )
 
+func CreateBinDir(targetDir string) (string, error) {
+	toolBinDir, err := filepath.Abs(targetDir)
+	if err != nil {
+		return "", err
+	}
+	err = os.MkdirAll(toolBinDir, 0o750)
+	if err != nil {
+		return "", err
+	}
+
+	return toolBinDir, nil
+}
+
 func Tools(targetDir string, tools map[string]string) error {
+	toolBinDir, err := CreateBinDir(targetDir)
+	if err != nil {
+		return err
+	}
+
 	if version, ok := tools["air"]; ok {
-		if err := Air(targetDir, version); err != nil {
+		if err := Air(toolBinDir, version); err != nil {
 			return err
 		}
 	}
 	if version, ok := tools["gofumpt"]; ok {
-		if err := Gofumpt(targetDir, version); err != nil {
+		if err := Gofumpt(toolBinDir, version); err != nil {
 			return err
 		}
 	}
 	if version, ok := tools["golangci-lint"]; ok {
-		if err := GolangciLint(targetDir, version); err != nil {
+		if err := GolangciLint(toolBinDir, version); err != nil {
 			return err
 		}
 	}
 	if version, ok := tools["gosimports"]; ok {
-		if err := Gosimports(targetDir, version); err != nil {
+		if err := Gosimports(toolBinDir, version); err != nil {
 			return err
 		}
 	}
 	if version, ok := tools["gotestsum"]; ok {
-		if err := Gotestsum(targetDir, version); err != nil {
+		if err := Gotestsum(toolBinDir, version); err != nil {
 			return err
 		}
 	}
 	if version, ok := tools["misspell"]; ok {
-		if err := Misspell(targetDir, version); err != nil {
+		if err := Misspell(toolBinDir, version); err != nil {
 			return err
 		}
 	}
 	if version, ok := tools["swag"]; ok {
-		if err := Swag(targetDir, version); err != nil {
+		if err := Swag(toolBinDir, version); err != nil {
 			return err
 		}
 	}
 	if version, ok := tools["templ"]; ok {
-		if err := Templ(targetDir, version); err != nil {
+		if err := Templ(toolBinDir, version); err != nil {
 			return err
 		}
 	}
