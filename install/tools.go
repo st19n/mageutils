@@ -8,21 +8,21 @@ import (
 	download "github.com/st19n/mageutils/download"
 )
 
-func CreateBinDir(targetDir string) (string, error) {
-	toolBinDir, err := filepath.Abs(targetDir)
+func CreateDir(targetDir string) (string, error) {
+	dir, err := filepath.Abs(targetDir)
 	if err != nil {
 		return "", err
 	}
-	err = os.MkdirAll(toolBinDir, 0o750)
+	err = os.MkdirAll(dir, 0o750)
 	if err != nil {
 		return "", err
 	}
 
-	return toolBinDir, nil
+	return dir, nil
 }
 
 func Tools(targetDir string, tools map[string]string) error {
-	toolBinDir, err := CreateBinDir(targetDir)
+	toolBinDir, err := CreateDir(targetDir)
 	if err != nil {
 		return err
 	}
