@@ -62,6 +62,11 @@ func Tools(targetDir string, tools map[string]string) error {
 			return err
 		}
 	}
+	if version, ok := tools["tailwindcss"]; ok {
+		if err := TailwindCSS(toolBinDir, version); err != nil {
+			return err
+		}
+	}
 	if version, ok := tools["templ"]; ok {
 		if err := Templ(toolBinDir, version); err != nil {
 			return err
@@ -148,6 +153,17 @@ func Swag(targetDir, version string) error {
 		ArchReplacement: map[string]string{
 			"amd64": arch,
 			"386":   "i386",
+		},
+	})
+}
+
+func TailwindCSS(targetDir, version string) error {
+	return download.DownloadBinary(targetDir, download.DownloadOptions{
+		Name:            "tailwindcss",
+		URL:             "https://github.com/tailwindlabs/tailwindcss/releases/download/{{.VERSION}}/tailwindcss-{{.GOOS}}-{{.GOARCH}}",
+		Version:         version,
+		ArchReplacement: map[string]string{
+			"amd64": "x64",
 		},
 	})
 }

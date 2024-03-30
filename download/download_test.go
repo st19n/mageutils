@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/st19n/mageutils/mgos"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -44,6 +43,6 @@ func TestDownload(t *testing.T) {
 		}
 		err = DownloadBinary(dest, opts)
 		require.NoError(t, err)
-		assert.FileExists(t, filepath.Join(dest, "mybin"+mgos.FileExt()))
+		assert.FileExists(t, filepath.Join(dest, "mybin"))
 	})
 }

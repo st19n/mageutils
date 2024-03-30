@@ -13,7 +13,6 @@ import (
 
 	"github.com/magefile/mage/sh"
 	"github.com/mholt/archiver/v3"
-	"github.com/st19n/mageutils/mgos"
 )
 
 // remix of https://github.com/carolynvs/magex
@@ -47,7 +46,7 @@ type DownloadOptions struct {
 	ArchiveFilePath string
 }
 
-func DownloadBinary(destDir string, opts DownloadOptions) error {
+func DownloadFile(destDir string, opts DownloadOptions) error {
 	src, err := renderTemplate(opts.URL, opts)
 	if err != nil {
 		return err
@@ -85,14 +84,8 @@ func DownloadBinary(destDir string, opts DownloadOptions) error {
 	}
 	f.Close()
 
-	// Make the binary executable
-	err = os.Chmod(tmpFile, 0o755)
-	if err != nil {
-		return fmt.Errorf("could nog make %s executable: %w", tmpFile, err)
-	}
-
 	// Move it to the destination
-	destPath := filepath.Join(destDir, opts.Name+mgos.FileExt())
+	destPath := filepath.Join(destDir, opts.Name)
 	if err = sh.Copy(destPath, tmpFile); err != nil {
 		return fmt.Errorf("error copying %s to %s: %w", tmpFile, destPath, err)
 	}
@@ -100,7 +93,7 @@ func DownloadBinary(destDir string, opts DownloadOptions) error {
 	return nil
 }
 
-func DownloadArchiveExtractBinary(destDir string, opts DownloadOptions) error {
+func DownloadArchiveFile(destDir string, opts DownloadOptions) error {
 	src, err := renderTemplate(opts.URL, opts)
 	if err != nil {
 		return err
@@ -115,7 +108,7 @@ func DownloadArchiveExtractBinary(destDir string, opts DownloadOptions) error {
 	}
 	// defer os.RemoveAll(tmpDir)
 	tarFile := filepath.Join(tmpDir, filepath.Base(src))
-	binFile := filepath.Join(tmpDir, opts.Name+mgos.FileExt())
+	outFile := filepath.Join(tmpDir, opts.Name)
 
 	r, err := http.Get(src)
 	if err != nil {
@@ -148,7 +141,7 @@ func DownloadArchiveExtractBinary(destDir string, opts DownloadOptions) error {
 			return _err
 		}
 		archiveFilePath = archivePath
-		binFile = filepath.Join(tmpDir, archiveFilePath+mgos.FileExt())
+		outFile = filepath.Join(tmpDir, archiveFilePath)
 	}
 
 	err = archiver.Extract(f.Name(), archiveFilePath, tmpDir)
@@ -156,16 +149,56 @@ func DownloadArchiveExtractBinary(destDir string, opts DownloadOptions) error {
 		return fmt.Errorf("failed to extract archive %s: %w", f.Name(), err)
 	}
 
-	// Make the binary executable
-	err = os.Chmod(binFile, 0o755)
-	if err != nil {
-		return fmt.Errorf("could nog make %s executable: %w", binFile, err)
+	// Move it to the destination
+	destPath := filepath.Join(destDir, opts.Name)
+	if err = sh.Copy(destPath, outFile); err != nil {
+		return fmt.Errorf("error copying %s to %s: %w", outFile, destPath, err)
 	}
 
-	// Move it to the destination
-	destPath := filepath.Join(destDir, opts.Name+mgos.FileExt())
-	if err = sh.Copy(destPath, binFile); err != nil {
-		return fmt.Errorf("error copying %s to %s: %w", binFile, destPath, err)
+	return nil
+}
+
+func DownloadBinary(destDir string, opts DownloadOptions) error {
+	err := DownloadFile(destDir, opts)
+	if err != nil {
+		return err
+	}
+
+	// Make the binary executable
+	outFile := filepath.Join(destDir, opts.Name)
+	err = os.Chmod(outFile, 0o755)
+	if err != nil {
+		return fmt.Errorf("could nog make %s executable: %w", outFile, err)
+	}
+
+	// rename the windows Binary
+	if runtime.GOOS == "windows" {
+		if err := renameWindowsExe(outFile); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func DownloadArchiveExtractBinary(destDir string, opts DownloadOptions) error {
+	err := DownloadArchiveFile(destDir, opts)
+	if err != nil {
+		return err
+	}
+
+	// Make the binary executable
+	outFile := filepath.Join(destDir, opts.Name)
+	err = os.Chmod(outFile, 0o755)
+	if err != nil {
+		return fmt.Errorf("could nog make %s executable: %w", outFile, err)
+	}
+
+	// rename the windows Binary
+	if runtime.GOOS == "windows" {
+		if err := renameWindowsExe(outFile); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -185,6 +218,12 @@ func renderTemplate(templateString string, opts DownloadOptions) (string, error)
 		return "", fmt.Errorf("error parsing %s as Go template: %w", opts.URL, err)
 	}
 
+	extension := ""
+	if runtime.GOOS == "windows" {
+		extension = ".exe"
+	}
+
+
 	srcData := struct {
 		NAME         string
 		GOOS         string
@@ -196,7 +235,7 @@ func renderTemplate(templateString string, opts DownloadOptions) (string, error)
 		NAME:         opts.Name,
 		GOOS:         runtime.GOOS,
 		GOARCH:       runtime.GOARCH,
-		EXT:          mgos.FileExt(),
+		EXT:          extension,
 		VERSION:      opts.Version,
 		CLEANVERSION: strings.Replace(opts.Version, "v", "", 1),
 	}
@@ -216,4 +255,14 @@ func renderTemplate(templateString string, opts DownloadOptions) (string, error)
 	}
 
 	return buf.String(), nil
+}
+
+func renameWindowsExe(exeFile string) error {
+	if strings.HasSuffix(exeFile, ".exe") {
+		return nil
+	}
+	if err := sh.Copy(exeFile+".exe", exeFile); err != nil {
+		return err
+	}
+	return sh.Rm(exeFile)
 }
