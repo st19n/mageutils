@@ -57,6 +57,11 @@ func Tools(targetDir string, tools map[string]string) error {
 			return err
 		}
 	}
+	if version, ok := tools["sqlc"]; ok {
+		if err := Sqlc(toolBinDir, version); err != nil {
+			return err
+		}
+	}
 	if version, ok := tools["swag"]; ok {
 		if err := Swag(toolBinDir, version); err != nil {
 			return err
@@ -130,6 +135,15 @@ func Misspell(targetDir, version string) error {
 		ArchReplacement: map[string]string{
 			"amd64": "64bit",
 		},
+	})
+}
+
+func Sqlc(targetDir, version string) error {
+	return download.DownloadArchiveExtractBinary(targetDir, download.DownloadOptions{
+		Name:            "sqlc",
+		URL:             "https://github.com/sqlc-dev/sqlc/releases/download/{{.VERSION}}/sqlc_{{.CLEANVERSION}}_{{.GOOS}}_{{.GOARCH}}.tar.gz",
+		Version:         version,
+		ArchiveFilePath: "{{.NAME}}",
 	})
 }
 
