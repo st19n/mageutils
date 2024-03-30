@@ -1,8 +1,8 @@
 package install
 
 import (
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	download "github.com/st19n/mageutils/download"

@@ -105,6 +105,9 @@ issues:
     - path: download
       linters:
         - forbidigo
+    - path: test
+      linters:
+        - forbidigo
     - linters:
         - gocritic
       text: "`ID' should not be capitalized"

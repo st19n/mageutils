@@ -14,7 +14,7 @@ func Hash() string {
 	return hash
 }
 
-// Branch returns the current git branch
+// Branch returns the current git branch.
 func Branch() string {
 	branch, _ := sh.Output("git", "rev-parse", "--abbrev-ref", "HEAD")
 	return branch
