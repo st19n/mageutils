@@ -42,6 +42,11 @@ func Tools(targetDir string, tools map[string]string) error {
 			return err
 		}
 	}
+	if version, ok := tools["goose"]; ok {
+		if err := Goose(toolBinDir, version); err != nil {
+			return err
+		}
+	}
 	if version, ok := tools["gosimports"]; ok {
 		if err := Gosimports(toolBinDir, version); err != nil {
 			return err
@@ -103,6 +108,17 @@ func GolangciLint(targetDir, version string) error {
 		URL:             "https://github.com/golangci/golangci-lint/releases/download/{{.VERSION}}/golangci-lint-{{.CLEANVERSION}}-{{.GOOS}}-{{.GOARCH}}.tar.gz",
 		Version:         version,
 		ArchiveFilePath: "golangci-lint-{{.CLEANVERSION}}-{{.GOOS}}-{{.GOARCH}}/{{.NAME}}",
+	})
+}
+
+func Goose(targetDir, version string) error {
+	return download.DownloadBinary(targetDir, download.DownloadOptions{
+		Name:    "goose",
+		URL:     "https://github.com/pressly/goose/releases/download/{{.VERSION}}/goose_{{.GOOS}}_{{.GOARCH}}",
+		Version: version,
+		ArchReplacement: map[string]string{
+			"amd64": "x86_64",
+		},
 	})
 }
 
