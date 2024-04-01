@@ -14,8 +14,8 @@ const (
 )
 
 // GotestsumWithCoverage - Run gotestsum and print the total test coverage.
-func GotestsumWithCoverage(ldFlags string) error {
-	err := Gotestsum(ldFlags)
+func GotestsumWithCoverage(ldFlags, files string, goTestArgs ...string) error {
+	err := Gotestsum(ldFlags, files, goTestArgs...)
 	if err != nil {
 		return err
 	}
@@ -23,15 +23,15 @@ func GotestsumWithCoverage(ldFlags string) error {
 }
 
 // Gotestsum - Run gotestsum.
-func Gotestsum(ldFlags string) error {
+func Gotestsum(ldFlags, files string, goTestArgs ...string) error {
 	_, err := install.CreateDir("./tmp")
 	if err != nil {
 		return err
 	}
-	return sh.RunV(
-		"gotestsum",
+	args := []string{
 		"--format", "pkgname-and-test-fails",
 		"--jsonfile", jsonOut,
+		"--packages", files,
 
 		"--",
 
@@ -39,14 +39,18 @@ func Gotestsum(ldFlags string) error {
 		"-race",
 		"-cover",
 		"-coverprofile="+testCoverageOut,
-		"./...",
+	}
+	args = append(args, goTestArgs...)
+
+	return sh.RunV(
+		"gotestsum",
+		args...,
 	)
 }
 
 // GotestsumWatch - Run gotestsum with the --watch flag.
-func GotestsumWatch(ldFlags string) error {
-	return sh.RunV(
-		"gotestsum",
+func GotestsumWatch(ldFlags string, goTestArgs ...string) error {
+	args := []string{
 		"--format", "testname",
 		"--watch",
 
@@ -54,6 +58,12 @@ func GotestsumWatch(ldFlags string) error {
 
 		"-race",
 		"-ldflags", ldFlags,
+	}
+	args = append(args, goTestArgs...)
+
+	return sh.RunV(
+		"gotestsum",
+		args...,
 	)
 }
 
