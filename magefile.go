@@ -24,8 +24,8 @@ import (
 var tools = map[string]string{
 	"gofumpt":       "v0.6.0",
 	"misspell":      "v0.3.4",
-	"golangci-lint": "v1.57.1",
-	"gotestsum":     "v1.11.0",
+	"golangci-lint": "v1.59.1",
+	"gotestsum":     "v1.12.0",
 }
 
 // Test - Run go tests

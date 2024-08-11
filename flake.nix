@@ -17,6 +17,7 @@
 					buildInputs = with pkgs; [
 						go
 						gopls
+						mage
 					];
 
 					shellHook = ''
