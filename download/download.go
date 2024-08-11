@@ -2,6 +2,7 @@ package downloads
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 	"text/template"
 
 	"github.com/magefile/mage/sh"
-	"github.com/mholt/archiver/v3"
+	"github.com/mholt/archiver/v4"
 )
 
 // remix of https://github.com/carolynvs/magex
@@ -108,7 +109,6 @@ func DownloadArchiveFile(destDir string, opts DownloadOptions) error {
 	}
 	// defer os.RemoveAll(tmpDir)
 	tarFile := filepath.Join(tmpDir, filepath.Base(src))
-	outFile := filepath.Join(tmpDir, opts.Name)
 
 	r, err := http.Get(src)
 	if err != nil {
@@ -132,6 +132,12 @@ func DownloadArchiveFile(destDir string, opts DownloadOptions) error {
 	}
 	f.Close()
 
+	ff, err := os.OpenFile(tarFile, os.O_RDONLY, 0o755)
+	if err != nil {
+		return fmt.Errorf("could not open downloaded archive %s: %w", tarFile, err)
+	}
+	defer ff.Close()
+
 	// extract archive
 	archiveFilePath := opts.Name
 	if opts.ArchiveFilePath != "" {
@@ -141,18 +147,37 @@ func DownloadArchiveFile(destDir string, opts DownloadOptions) error {
 			return _err
 		}
 		archiveFilePath = archivePath
-		outFile = filepath.Join(tmpDir, archiveFilePath)
 	}
 
-	err = archiver.Extract(f.Name(), archiveFilePath, tmpDir)
+	format, reader, err := archiver.Identify(ff.Name(), ff)
 	if err != nil {
-		return fmt.Errorf("failed to extract archive %s: %w", f.Name(), err)
+		return fmt.Errorf("failed to detect archive format for archive %s: %w", ff.Name(), err)
 	}
 
-	// Move it to the destination
-	destPath := filepath.Join(destDir, opts.Name)
-	if err = sh.Copy(destPath, outFile); err != nil {
-		return fmt.Errorf("error copying %s to %s: %w", outFile, destPath, err)
+	if ex, ok := format.(archiver.Extractor); ok {
+		err := ex.Extract(context.Background(), reader, []string{archiveFilePath}, func(ctx context.Context, f archiver.File) error {
+			rc, err := f.Open()
+			if err != nil {
+				return err
+			}
+			// write file to destination
+			destPath := filepath.Join(destDir, opts.Name)
+			outFile, err := os.Create(destPath)
+			if err != nil {
+				return fmt.Errorf("error creating output file %s: %w", destPath, err)
+			}
+			defer outFile.Close()
+			_, err = io.Copy(outFile, rc)
+			if err != nil {
+				return fmt.Errorf("error copying %s to %s: %w", f.Name(), destPath, err)
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("failed to extract archive %s", f.Name())
+		}
+	} else {
+		return fmt.Errorf("failed to extract archive %s", f.Name())
 	}
 
 	return nil
@@ -222,7 +247,6 @@ func renderTemplate(templateString string, opts DownloadOptions) (string, error)
 	if runtime.GOOS == "windows" {
 		extension = ".exe"
 	}
-
 
 	srcData := struct {
 		NAME         string

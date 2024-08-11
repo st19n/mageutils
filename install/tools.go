@@ -189,9 +189,9 @@ func Swag(targetDir, version string) error {
 
 func TailwindCSS(targetDir, version string) error {
 	return download.DownloadBinary(targetDir, download.DownloadOptions{
-		Name:            "tailwindcss",
-		URL:             "https://github.com/tailwindlabs/tailwindcss/releases/download/{{.VERSION}}/tailwindcss-{{.GOOS}}-{{.GOARCH}}",
-		Version:         version,
+		Name:    "tailwindcss",
+		URL:     "https://github.com/tailwindlabs/tailwindcss/releases/download/{{.VERSION}}/tailwindcss-{{.GOOS}}-{{.GOARCH}}",
+		Version: version,
 		ArchReplacement: map[string]string{
 			"amd64": "x64",
 		},

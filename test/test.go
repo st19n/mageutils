@@ -38,7 +38,7 @@ func Gotestsum(ldFlags, files string, goTestArgs ...string) error {
 		"-ldflags", ldFlags,
 		"-race",
 		"-cover",
-		"-coverprofile="+testCoverageOut,
+		"-coverprofile=" + testCoverageOut,
 	}
 	args = append(args, goTestArgs...)
 
