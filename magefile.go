@@ -22,9 +22,9 @@ import (
 )
 
 var tools = map[string]string{
-	"gofumpt":       "v0.6.0",
+	"gofumpt":       "v0.7.0",
 	"misspell":      "v0.3.4",
-	"golangci-lint": "v1.59.1",
+	"golangci-lint": "v1.62.2",
 	"gotestsum":     "v1.12.0",
 }
 

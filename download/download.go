@@ -13,7 +13,7 @@ import (
 	"text/template"
 
 	"github.com/magefile/mage/sh"
-	"github.com/mholt/archiver/v4"
+	"github.com/mholt/archives"
 )
 
 // remix of https://github.com/carolynvs/magex
@@ -149,13 +149,16 @@ func DownloadArchiveFile(destDir string, opts DownloadOptions) error {
 		archiveFilePath = archivePath
 	}
 
-	format, reader, err := archiver.Identify(ff.Name(), ff)
+	format, reader, err := archives.Identify(context.Background(), ff.Name(), ff)
 	if err != nil {
 		return fmt.Errorf("failed to detect archive format for archive %s: %w", ff.Name(), err)
 	}
 
-	if ex, ok := format.(archiver.Extractor); ok {
-		err := ex.Extract(context.Background(), reader, []string{archiveFilePath}, func(ctx context.Context, f archiver.File) error {
+	if ex, ok := format.(archives.Extractor); ok {
+		err := ex.Extract(context.Background(), reader, func(ctx context.Context, f archives.FileInfo) error {
+			if f.NameInArchive != archiveFilePath {
+				return nil
+			}
 			rc, err := f.Open()
 			if err != nil {
 				return err
